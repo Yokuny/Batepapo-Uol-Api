@@ -1,15 +1,15 @@
 import dotenv from "dotenv";
 dotenv.config();
-const database = process.env.DATABASE;
+const key = process.env.DATABASE_URL;
 import { MongoClient, ServerApiVersion } from "mongodb";
-const client = new MongoClient(database, {
+const client = new MongoClient(key, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-const dbCollettion = async () => {
+const dbDatabase = async () => {
   await client.connect();
-  const collection = client.db("oul").collection("oul");
-  return collection;
+  const database = client.db("oul");
+  return database;
 };
-export default dbCollettion;
+export default dbDatabase;
