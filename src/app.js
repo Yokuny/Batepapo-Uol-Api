@@ -1,14 +1,33 @@
 import express from "express";
-import dbCollettion from "../script/db.js";
 const app = express();
-const db = await dbCollettion();
+import { userValidation } from "../script/joi.js";
+import dbDatabase from "../script/db.js";
+app.use(express.json());
+const db = await dbDatabase();
 
-app.get("/", async (req, res) => {
+app.post("/participants", async (req, res) => {
+  const { name } = req.body;
+  const { error } = userValidation.validate({ name });
+  //validar conferindo se o nome ja esta cadastrado
+  //caso esteja, retornar status 409
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  } else {
+    try {
+      await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() });
+      res.status(201).send("Participant added");
+    } catch (err) {
+      res.status(422).send("Internal server error");
+    }
+  }
+});
+
+app.get("/participants", async (req, res) => {
   try {
-    const result = await db.find().toArray();
-    res.json(result);
+    const participants = await db.collection("participants").find().toArray();
+    res.status(200).send(participants);
   } catch (err) {
-    console.log(err);
+    res.status(422).send("Internal server error");
   }
 });
 
