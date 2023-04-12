@@ -60,10 +60,16 @@ app.post("/messages", async (req, res) => {
 });
 
 app.get("/messages", async (req, res) => {
-  //buscar msg publicas - remetente “Todos”
-  //todas as msg enviadas "to" com o nome do usuário ou todas as com "from" e o nome do usuario
-  //usar operador $and e $or mongodb
   const { user } = req.headers;
+  try {
+    const availableMessages = await db
+      .collection("messages")
+      .find({ $or: [{ to: "Todos" }, { to: user }, { from: user }] })
+      .toArray();
+    res.status(200).send(availableMessages);
+  } catch (err) {
+    res.status(422).send("Internal server error");
+  }
 });
 
 app.listen(5000);
