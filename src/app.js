@@ -9,20 +9,24 @@ const db = await dbDatabase();
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
-  const { err } = userValidation.validate({ name });
-  if (err) {
-    return res.status(422).send("Invalid data");
+  const { error } = userValidation.validate({ name });
+  if (error) {
+    return res.status(400).send({ message: error.message });
   } else {
     try {
       const usersDatabase = await db.collection("participants").findOne({ name: name });
       if (usersDatabase) {
         return res.status(409).send("User already exists");
       } else {
+        const time = dayjs().format("HH:mm:ss");
         await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() });
+        await db
+          .collection("messages")
+          .insertOne({ from: name, to: "Todos", text: "entra na sala...", type: "status", time: time });
         res.sendStatus(201);
       }
     } catch (err) {
-      res.status(422).send("Internal server error");
+      res.status(500).send("Internal server error");
     }
   }
 });
@@ -46,16 +50,13 @@ app.post("/messages", async (req, res) => {
     if (err) {
       return res.status(422).send("Invalid data");
     } else {
-      try {
-        const time = dayjs().format("HH:mm:ss");
-        await db.collection("messages").insertOne({ to, text, type, from, time });
-        res.sendStatus(201);
-      } catch (err) {
-        res.status(422).send("Internal server error");
-      }
+
+      const time = dayjs().format("HH:mm:ss");
+      await db.collection("messages").insertOne({ to, text, type, from, time });
+      res.sendStatus(201);
     }
   } catch (err) {
-    return res.status(422).send("usuario não encontrado");
+    return res.status(500).json({ message: err.message });
   }
 });
 
