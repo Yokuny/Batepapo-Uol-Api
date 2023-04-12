@@ -46,11 +46,10 @@ app.post("/messages", async (req, res) => {
   try {
     const userOnline = await db.collection("participants").findOne({ name: user });
     const from = userOnline.name;
-    const { err } = messageValidation.validate({ to, text, type, from });
-    if (err) {
-      return res.status(422).send("Invalid data");
+    const { error } = messageValidation.validate({ to, text, type, from });
+    if (error) {
+      return res.status(422).send({ message: error.message });
     } else {
-
       const time = dayjs().format("HH:mm:ss");
       await db.collection("messages").insertOne({ to, text, type, from, time });
       res.sendStatus(201);
@@ -72,5 +71,7 @@ app.get("/messages", async (req, res) => {
     res.status(422).send("Internal server error");
   }
 });
+
+
 
 app.listen(5000);
