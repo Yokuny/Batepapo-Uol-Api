@@ -2,11 +2,11 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
-import postParticipants from "./routs/postParticipants.js";
-import getParticipants from "./routs/getParticipants.js";
-import postMessages from "./routs/postMessages.js";
-import getmessages from "./routs/getMessages.js";
-import postStatus from "./routs/postStatus.js";
+import postParticipants from "./routes/postParticipants.js";
+import getParticipants from "./routes/getParticipants.js";
+import postMessages from "./routes/postMessages.js";
+import getmessages from "./routes/getMessages.js";
+import postStatus from "./routes/postStatus.js";
 app.post("/participants", postParticipants);
 app.get("/participants", getParticipants);
 app.post("/messages", postMessages);
