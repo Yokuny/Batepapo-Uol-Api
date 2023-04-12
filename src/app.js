@@ -11,7 +11,7 @@ app.post("/participants", async (req, res) => {
   const { name } = req.body;
   const { error } = userValidation.validate({ name });
   if (error) {
-    return res.status(400).send({ message: err.message });
+    return res.status(400).send({ message: error.message });
   } else {
     try {
       const usersDatabase = await db.collection("participants").findOne({ name: name });
@@ -50,6 +50,7 @@ app.post("/messages", async (req, res) => {
     if (err) {
       return res.status(422).send("Invalid data");
     } else {
+
       const time = dayjs().format("HH:mm:ss");
       await db.collection("messages").insertOne({ to, text, type, from, time });
       res.sendStatus(201);
