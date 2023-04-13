@@ -1,16 +1,15 @@
-import mongoose from "mongoose";
+import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
-
 dotenv.config();
+
 const key = process.env.DATABASE_URL;
 
 const dbDatabase = async () => {
+  const mongoClient = new MongoClient(key);
   try {
-    await mongoose.connect(key, {
-      useUnifiedTopology: true,
-      useNewUrlParser: true,
-    });
-    const database = mongoose.connection.db;
+    const connection = await mongoClient.connect();
+
+    const database = connection.db;
     return database;
   } catch (err) {
     console.error(err);
