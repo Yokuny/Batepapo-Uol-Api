@@ -1,6 +1,9 @@
 import express from "express";
+import db from "../script/db.js";
 const app = express();
 app.use(express.json());
+
+import inactiveUser from "../script/inactiveUser.js";
 
 import postParticipants from "./routes/postParticipants.js";
 import getParticipants from "./routes/getParticipants.js";
@@ -13,4 +16,7 @@ app.post("/messages", postMessages);
 app.get("/messages", getmessages);
 app.post("/status", postStatus);
 
-app.listen(5000);
+app.listen(5000, () => {
+  db();
+  setInterval(inactiveUser, 1500);
+});
