@@ -7,12 +7,11 @@ import { userValidation, messageValidation } from "../script/joi.js";
 const app = express();
 app.use(express.json());
 dotenv.config();
-const PORT = process.env.PORT;
 
-const URI = process.env.DATABASE_URL;
-console.log(URI);
+const PORT = process.env.PORT;
+// const URI = process.env.DATABASE_URL;
 const startDB = async () => {
-  const mongoClient = new MongoClient(URI, {
+  const mongoClient = new MongoClient(process.env.DATABASE_URL, {
     serverApi: {
       version: ServerApiVersion.v1,
       strict: true,
@@ -138,5 +137,5 @@ app.post("/status", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log(`http://localhost:${PORT}/`);
-  setInterval(inactiveUser, 1500);
+  setInterval(inactiveUser, 15000);
 });
