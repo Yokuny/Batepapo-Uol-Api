@@ -141,8 +141,9 @@ app.post("/status", async (req, res) => {
     if (userOnline) {
       await db.collection("participants").updateOne({ name: userName }, { $set: { lastStatus: Date.now() } });
       return res.sendStatus(200);
+    } else {
+      return res.status(404).send({ message: error.message });
     }
-    res.sendStatus(400);
   } catch (err) {
     res.status(404).send({ message: err.message });
   }
