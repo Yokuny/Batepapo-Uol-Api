@@ -8,18 +8,15 @@ const app = express();
 app.use(express.json());
 dotenv.config();
 const PORT = process.env.PORT;
-// const URI = process.env.DATABASE_URL;
+const URI = process.env.DATABASE_URL;
 const startDB = async () => {
-  const mongoClient = new MongoClient(
-    "mongodb+srv://Felipe:0213@cluster0.talpocw.mongodb.net/?retryWrites=true&w=majority",
-    {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      },
-    }
-  );
+  const mongoClient = new MongoClient(URI, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
   try {
     await mongoClient.connect();
     const database = await mongoClient.db();
