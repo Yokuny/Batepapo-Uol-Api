@@ -7,25 +7,28 @@ import { userValidation } from "../script/joi.js";
 const app = express();
 app.use(express.json());
 dotenv.config();
-
-const key = process.env.DATABASE_URL;
-const initDB = async () => {
-  const client = new MongoClient(key, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
-  });
+const PORT = process.env.PORT;
+// const URI = process.env.DATABASE_URL;
+const startDB = async () => {
+  const mongoClient = new MongoClient(
+    "mongodb+srv://Felipe:0213@cluster0.talpocw.mongodb.net/?retryWrites=true&w=majority",
+    {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    }
+  );
   try {
-    await client.connect();
-    const database = await client.db();
+    await mongoClient.connect();
+    const database = await mongoClient.db();
     return database;
   } catch {
     console.log("error iniciar db");
   }
 };
-const db = await initDB();
+const db = await startDB();
 
 const inactiveUser = async () => {
   const tenSecondsAgo = Date.now();
@@ -47,6 +50,7 @@ const inactiveUser = async () => {
       });
       await db.collection("participants").deleteOne({ name: user.name });
     });
+    console.log(">>");
   } catch (err) {
     console.log({ message: err.message });
   }
@@ -56,7 +60,7 @@ app.post("/participants", async (req, res) => {
   const { name } = req.body;
   const { error } = userValidation.validate({ name });
   if (error) {
-    return res.status(400).send({ message: error.message });
+    return res.status(422).send({ message: error.message });
   } else {
     try {
       const usersDatabase = await db.collection("participants").findOne({ name: name });
@@ -75,7 +79,6 @@ app.post("/participants", async (req, res) => {
     }
   }
 });
-
 app.get("/participants", async (req, res) => {
   try {
     const participants = await db.collection("participants").find().toArray();
@@ -86,10 +89,10 @@ app.get("/participants", async (req, res) => {
 });
 app.post("/messages", async (req, res) => {
   const { to, text, type } = req.body;
-  const { user } = req.headers;
+  const userName = req.headers.user || req.headers.User;
   try {
-    const userOnline = await db.collection("participants").findOne({ name: user });
-    const from = userOnline.name;
+    const userOnline = await db.collection("participants").findOne({ name: userName });
+    const from = userOnline.userName;
     const { error } = messageValidation.validate({ to, text, type, from });
     if (error) {
       return res.status(422).send({ message: error.message });
@@ -103,11 +106,11 @@ app.post("/messages", async (req, res) => {
   }
 });
 app.get("/messages", async (req, res) => {
-  const { user } = req.headers;
+  const userName = req.headers.user || req.headers.User;
   try {
     const availableMessages = await db
       .collection("messages")
-      .find({ $or: [{ to: "Todos" }, { to: user }, { from: user }] })
+      .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
       .toArray();
     res.status(200).send(availableMessages);
   } catch (err) {
@@ -131,6 +134,7 @@ app.post("/status", async (req, res) => {
   }
 });
 
-app.listen(5000, async () => {
-  setInterval(inactiveUser, 1500);
+app.listen(PORT, async () => {
+  console.log(`http://localhost:${PORT}/`);
+  setInterval(inactiveUser, 15000);
 });
