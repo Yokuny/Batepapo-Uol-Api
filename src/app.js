@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import dayjs from "dayjs";
 import cors from "cors";
 import joi from "joi";
-import MongoClient from "mongodb";
+import { MongoClient } from "mongodb";
 
 const userValidation = joi.object({
   name: joi.string().min(2).max(30).required(),
@@ -23,16 +23,13 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 const URI = process.env.DATABASE_URL;
 
-const startDB = async () => {
-  const mongoClient = new MongoClient(URI);
-  try {
-    await mongoClient.connect();
-    return mongoClient.db();
-  } catch {
-    console.log("error iniciar db");
-  }
-};
-const db = await startDB();
+const database = new MongoClient(URI);
+try {
+  await database.connect();
+} catch (err) {
+  console.log({ message: err.message });
+}
+const db = database.db();
 setInterval(inactiveUser, 15000);
 
 app.post("/participants", async (req, res) => {
