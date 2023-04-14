@@ -14,6 +14,9 @@ const messageValidation = joi.object({
   type: joi.string().valid("message", "private_message").required(),
   from: joi.string().min(1).required(),
 });
+const numberValidation = joi.object({
+  limit: joi.number().integer().min(1).required(),
+});
 
 const app = express();
 app.use(express.json());
@@ -43,6 +46,7 @@ const inactiveUser = async () => {
         lastStatus: { $lt: tenSecondsAgo - 10000 },
       })
       .toArray();
+    console.log(afk);
     afk.forEach(async (user) => {
       const time = dayjs().format("HH:mm:ss");
       await db.collection("messages").insertOne({
@@ -52,7 +56,6 @@ const inactiveUser = async () => {
         from: user.name,
         time: time,
       });
-
       await db.collection("participants").deleteOne({ name: user.name });
     });
   } catch (err) {
@@ -92,7 +95,6 @@ app.get("/participants", async (req, res) => {
 app.post("/messages", async (req, res) => {
   const { to, text, type } = req.body;
   const userName = req.headers.user || req.headers.User;
-  // if (!userName) return res.sendStatus(422);
   try {
     const userOnline = await db.collection("participants").findOne({ name: userName });
     const from = userOnline.name;
@@ -102,21 +104,32 @@ app.post("/messages", async (req, res) => {
     await db.collection("messages").insertOne({ to, text, type, from, time });
     res.sendStatus(201);
   } catch (err) {
-    // 422 caso campo "User" não esteja presente no header?DETALHES
-    // 422 caso campo "User" contenha usuário não cadastrado?
     return res.status(422).json({ message: err.message });
   }
 });
 app.get("/messages", async (req, res) => {
   const userName = req.headers.user || req.headers.User;
+  const { limit } = req.query;
+  const { error } = numberValidation.validate({ limit });
   try {
-    const availableMessages = await db
-      .collection("messages")
-      .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
-      .toArray();
-    res.status(200).send(availableMessages);
-  } catch (err) {
-    res.status(422).send("Internal server error");
+    let availableMessages;
+    if (error) {
+      availableMessages = await db
+        .collection("messages")
+        .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
+        .toArray();
+      res.status(422).send(availableMessages);
+    } else {
+      const limitNumber = parseInt(limit);
+      availableMessages = await db
+        .collection("messages")
+        .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
+        .limit(limitNumber)
+        .toArray();
+      res.status(200).send(availableMessages);
+    }
+  } catch (error) {
+    res.status(422).send({ message: error.message });
   }
 });
 app.post("/status", async (req, res) => {
