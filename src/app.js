@@ -1,8 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
+import joi from "joi";
 import dayjs from "dayjs";
 import { MongoClient, ServerApiVersion } from "mongodb";
-import { userValidation, messageValidation } from "../script/joi.js";
+
+const userValidation = joi.object({
+  name: joi.string().min(2).max(30).required(),
+});
+const messageValidation = joi.object({
+  to: joi.string().min(2).max(30).required(),
+  text: joi.string().min(2).max(250).required(),
+  type: joi.string().valid("message", "private_message").required(),
+  from: joi.string().min(2).max(30).required(),
+});
 
 const app = express();
 app.use(express.json());
@@ -28,32 +38,6 @@ const startDB = async () => {
 };
 
 const db = await startDB();
-
-const inactiveUser = async () => {
-  const tenSecondsAgo = Date.now();
-  try {
-    const afk = await db
-      .collection("participants")
-      .find({
-        lastStatus: { $lt: tenSecondsAgo - 10000 },
-      })
-      .toArray();
-    afk.forEach(async (user) => {
-      const time = dayjs().format("HH:mm:ss");
-      await db.collection("messages").insertOne({
-        to: "Todos",
-        text: "sai da sala...",
-        type: "status",
-        from: user.name,
-        time: time,
-      });
-
-      await db.collection("participants").deleteOne({ name: user.name });
-    });
-  } catch (err) {
-    console.log({ message: err.message });
-  }
-};
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
@@ -135,7 +119,33 @@ app.post("/status", async (req, res) => {
   }
 });
 
+const inactiveUser = async () => {
+  const tenSecondsAgo = Date.now();
+  try {
+    const afk = await db
+      .collection("participants")
+      .find({
+        lastStatus: { $lt: tenSecondsAgo - 10000 },
+      })
+      .toArray();
+    afk.forEach(async (user) => {
+      const time = dayjs().format("HH:mm:ss");
+      await db.collection("messages").insertOne({
+        to: "Todos",
+        text: "sai da sala...",
+        type: "status",
+        from: user.name,
+        time: time,
+      });
+
+      await db.collection("participants").deleteOne({ name: user.name });
+    });
+  } catch (err) {
+    console.log({ message: err.message });
+  }
+};
+
 app.listen(PORT, async () => {
   console.log(`http://localhost:${PORT}/`);
-  setInterval(inactiveUser, 15000);
+  setInterval(inactiveUser, 20000);
 });
