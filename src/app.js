@@ -64,26 +64,21 @@ setInterval(inactiveUser, 15000);
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
   const { error } = userValidation.validate({ name });
-  if (error) {
-    return res.status(422).send({ message: error.message });
-  } else {
-    try {
-      const usersDatabase = await db.collection("participants").findOne({ name: name });
-      if (usersDatabase) {
-        return res.status(409).send("User already exists");
-      } else {
-        const time = dayjs().format("HH:mm:ss");
-
-        await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() });
-
-        await db
-          .collection("messages")
-          .insertOne({ from: name, to: "Todos", text: "entra na sala...", type: "status", time: time });
-        res.sendStatus(201);
-      }
-    } catch (err) {
-      res.status(500).send({ message: err.message });
+  if (error) return res.status(422).send({ message: error.message });
+  try {
+    const usersDatabase = await db.collection("participants").findOne({ name: name });
+    if (usersDatabase) {
+      return res.status(409).send("User already exists");
+    } else {
+      const time = dayjs().format("HH:mm:ss");
+      await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() });
+      await db
+        .collection("messages")
+        .insertOne({ from: name, to: "Todos", text: "entra na sala...", type: "status", time: time });
+      res.sendStatus(201);
     }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
   }
 });
 app.get("/participants", async (req, res) => {
@@ -97,19 +92,19 @@ app.get("/participants", async (req, res) => {
 app.post("/messages", async (req, res) => {
   const { to, text, type } = req.body;
   const userName = req.headers.user || req.headers.User;
+  // if (!userName) return res.sendStatus(422);
   try {
     const userOnline = await db.collection("participants").findOne({ name: userName });
     const from = userOnline.name;
     const { error } = messageValidation.validate({ to, text, type, from });
-    if (error) {
-      return res.status(422).send({ message: error.message });
-    } else {
-      const time = dayjs().format("HH:mm:ss");
-      await db.collection("messages").insertOne({ to, text, type, from, time });
-      res.sendStatus(201);
-    }
+    if (error) return res.status(422).send({ message: error.message });
+    const time = dayjs().format("HH:mm:ss");
+    await db.collection("messages").insertOne({ to, text, type, from, time });
+    res.sendStatus(201);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    // 422 caso campo "User" não esteja presente no header?DETALHES
+    // 422 caso campo "User" contenha usuário não cadastrado?
+    return res.status(422).json({ message: err.message });
   }
 });
 app.get("/messages", async (req, res) => {
@@ -132,10 +127,9 @@ app.post("/status", async (req, res) => {
     const userOnline = await db.collection("participants").findOne({ name: user });
     if (userOnline) {
       await db.collection("participants").updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
-      res.sendStatus(200);
-    } else {
-      res.sendStatus(400);
+      return res.sendStatus(200);
     }
+    res.sendStatus(400);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
