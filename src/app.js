@@ -6,13 +6,13 @@ import joi from "joi";
 import { MongoClient } from "mongodb";
 
 const userValidation = joi.object({
-  name: joi.string().min(2).max(30).required(),
+  name: joi.string().min(1).required(),
 });
 const messageValidation = joi.object({
-  to: joi.string().min(2).max(30).required(),
-  text: joi.string().min(2).max(250).required(),
+  to: joi.string().min(1).required(),
+  text: joi.string().min(1).max(250).required(),
   type: joi.string().valid("message", "private_message").required(),
-  from: joi.string().min(2).max(30).required(),
+  from: joi.string().min(1).required(),
 });
 
 const app = express();
@@ -21,8 +21,8 @@ app.use(cors());
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-
 const URI = process.env.DATABASE_URL;
+
 const dbConnection = async () => {
   const database = new MongoClient(URI);
   try {
@@ -141,6 +141,4 @@ app.post("/status", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(PORT);
-});
+app.listen(PORT);
