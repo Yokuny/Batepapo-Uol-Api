@@ -2,13 +2,15 @@ import express from "express";
 import dotenv from "dotenv";
 import dayjs from "dayjs";
 import { MongoClient, ServerApiVersion } from "mongodb";
-import { userValidation } from "../script/joi.js";
+import { userValidation, messageValidation } from "../script/joi.js";
 
 const app = express();
 app.use(express.json());
 dotenv.config();
 const PORT = process.env.PORT;
+
 const URI = process.env.DATABASE_URL;
+console.log(URI);
 const startDB = async () => {
   const mongoClient = new MongoClient(URI, {
     serverApi: {
@@ -19,12 +21,13 @@ const startDB = async () => {
   });
   try {
     await mongoClient.connect();
-    const database = await mongoClient.db();
+    const database = mongoClient.db();
     return database;
   } catch {
     console.log("error iniciar db");
   }
 };
+
 const db = await startDB();
 
 const inactiveUser = async () => {
@@ -45,9 +48,9 @@ const inactiveUser = async () => {
         from: user.name,
         time: time,
       });
+
       await db.collection("participants").deleteOne({ name: user.name });
     });
-    console.log(">>");
   } catch (err) {
     console.log({ message: err.message });
   }
@@ -65,7 +68,9 @@ app.post("/participants", async (req, res) => {
         return res.status(409).send("User already exists");
       } else {
         const time = dayjs().format("HH:mm:ss");
+
         await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() });
+
         await db
           .collection("messages")
           .insertOne({ from: name, to: "Todos", text: "entra na sala...", type: "status", time: time });
@@ -89,7 +94,7 @@ app.post("/messages", async (req, res) => {
   const userName = req.headers.user || req.headers.User;
   try {
     const userOnline = await db.collection("participants").findOne({ name: userName });
-    const from = userOnline.userName;
+    const from = userOnline.name;
     const { error } = messageValidation.validate({ to, text, type, from });
     if (error) {
       return res.status(422).send({ message: error.message });
@@ -133,5 +138,5 @@ app.post("/status", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log(`http://localhost:${PORT}/`);
-  setInterval(inactiveUser, 15000);
+  setInterval(inactiveUser, 1500);
 });
