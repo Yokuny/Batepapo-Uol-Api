@@ -133,18 +133,18 @@ app.get("/messages", async (req, res) => {
   }
 });
 app.post("/status", async (req, res) => {
-  const { user } = req.headers;
-  const { error } = userValidation.validate({ user });
+  const userName = req.headers.user || req.headers.User;
+  const { error } = userValidation.validate({ userName });
   if (error) return res.status(404).send({ message: error.message });
   try {
-    const userOnline = await db.collection("participants").findOne({ name: user });
+    const userOnline = await db.collection("participants").findOne({ name: userName });
     if (userOnline) {
-      await db.collection("participants").updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+      await db.collection("participants").updateOne({ name: userName }, { $set: { lastStatus: Date.now() } });
       return res.sendStatus(200);
     }
     res.sendStatus(400);
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    res.status(404).send({ message: err.message });
   }
 });
 
