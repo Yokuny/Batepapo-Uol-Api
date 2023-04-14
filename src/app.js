@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json());
 dotenv.config();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 // const URI = process.env.DATABASE_URL;
 const startDB = async () => {
   const mongoClient = new MongoClient(process.env.DATABASE_URL, {
