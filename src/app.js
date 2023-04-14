@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json());
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 // const URI = process.env.DATABASE_URL;
 const startDB = async () => {
   const mongoClient = new MongoClient(process.env.DATABASE_URL, {
@@ -145,7 +145,7 @@ const inactiveUser = async () => {
   }
 };
 
-app.listen(PORT, async () => {
-  console.log(`http://localhost:${PORT}/`);
+app.listen(5000, async () => {
+  console.log(`http://localhost:${5000}/`);
   setInterval(inactiveUser, 15000);
 });
