@@ -147,5 +147,5 @@ const inactiveUser = async () => {
 
 app.listen(PORT, async () => {
   console.log(`http://localhost:${PORT}/`);
-  setInterval(inactiveUser, 20000);
+  setInterval(inactiveUser, 15000);
 });
