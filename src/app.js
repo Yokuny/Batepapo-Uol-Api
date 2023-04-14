@@ -16,20 +16,49 @@ const messageValidation = joi.object({
 });
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-const URI = process.env.DATABASE_URL;
 
-const database = new MongoClient(URI);
-try {
-  await database.connect();
-} catch (err) {
-  console.log({ message: err.message });
-}
-const db = database.db();
+const URI = process.env.DATABASE_URL;
+const dbConnection = async () => {
+  const database = new MongoClient(URI);
+  try {
+    await database.connect();
+    return database.db();
+  } catch (err) {
+    console.log({ message: err.message });
+  }
+};
+const db = await dbConnection();
+
+const inactiveUser = async () => {
+  const tenSecondsAgo = Date.now();
+  try {
+    const afk = await db
+      .collection("participants")
+      .find({
+        lastStatus: { $lt: tenSecondsAgo - 10000 },
+      })
+      .toArray();
+    afk.forEach(async (user) => {
+      const time = dayjs().format("HH:mm:ss");
+      await db.collection("messages").insertOne({
+        to: "Todos",
+        text: "sai da sala...",
+        type: "status",
+        from: user.name,
+        time: time,
+      });
+
+      await db.collection("participants").deleteOne({ name: user.name });
+    });
+  } catch (err) {
+    console.log({ message: err.message });
+  }
+};
 setInterval(inactiveUser, 15000);
 
 app.post("/participants", async (req, res) => {
@@ -112,30 +141,6 @@ app.post("/status", async (req, res) => {
   }
 });
 
-const inactiveUser = async () => {
-  const tenSecondsAgo = Date.now();
-  try {
-    const afk = await db
-      .collection("participants")
-      .find({
-        lastStatus: { $lt: tenSecondsAgo - 10000 },
-      })
-      .toArray();
-    afk.forEach(async (user) => {
-      const time = dayjs().format("HH:mm:ss");
-      await db.collection("messages").insertOne({
-        to: "Todos",
-        text: "sai da sala...",
-        type: "status",
-        from: user.name,
-        time: time,
-      });
-
-      await db.collection("participants").deleteOne({ name: user.name });
-    });
-  } catch (err) {
-    console.log({ message: err.message });
-  }
-};
-
-app.listen(PORT);
+app.listen(PORT, () => {
+  console.log(PORT);
+});
