@@ -1,8 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
-import joi from "joi";
 import dayjs from "dayjs";
-import { MongoClient, ServerApiVersion } from "mongodb";
+import cors from "cors";
+import joi from "joi";
+import MongoClient from "mongodb";
 
 const userValidation = joi.object({
   name: joi.string().min(2).max(30).required(),
@@ -15,29 +16,24 @@ const messageValidation = joi.object({
 });
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 dotenv.config();
 
-// const PORT = process.env.PORT || 5000;
-// const URI = process.env.DATABASE_URL;
+const PORT = process.env.PORT || 5000;
+const URI = process.env.DATABASE_URL;
+
 const startDB = async () => {
-  const mongoClient = new MongoClient(process.env.DATABASE_URL, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    },
-  });
+  const mongoClient = new MongoClient(URI);
   try {
     await mongoClient.connect();
-    const database = mongoClient.db();
-    return database;
+    return mongoClient.db();
   } catch {
     console.log("error iniciar db");
   }
 };
-
 const db = await startDB();
+setInterval(inactiveUser, 15000);
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
@@ -145,7 +141,4 @@ const inactiveUser = async () => {
   }
 };
 
-app.listen(5000, async () => {
-  console.log(`http://localhost:${5000}/`);
-  setInterval(inactiveUser, 15000);
-});
+app.listen(PORT);
