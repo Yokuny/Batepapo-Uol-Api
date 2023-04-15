@@ -118,7 +118,7 @@ app.get("/messages", async (req, res) => {
         .collection("messages")
         .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
         .toArray();
-      res.status(422).send(availableMessages);
+      return res.status(422).send(availableMessages);
     } else {
       const limitNumber = parseInt(limit);
       availableMessages = await db
@@ -126,7 +126,7 @@ app.get("/messages", async (req, res) => {
         .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
         .limit(limitNumber)
         .toArray();
-      res.status(200).send(availableMessages);
+      return res.status(200).send(availableMessages);
     }
   } catch (error) {
     res.status(422).send({ message: error.message });
@@ -140,7 +140,7 @@ app.post("/status", async (req, res) => {
     const userOnline = await db.collection("participants").findOne({ name: name });
     if (userOnline) {
       await db.collection("participants").updateOne({ name: name }, { $set: { lastStatus: Date.now() } });
-      return res.sendStatus(201);
+      return res.sendStatus(200);
     } else {
       return res.status(404).send({ message: error.message });
     }
