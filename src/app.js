@@ -62,7 +62,7 @@ const inactiveUser = async () => {
     console.log({ message: err.message });
   }
 };
-setInterval(inactiveUser, 15000);
+setInterval(inactiveUser, 150000);
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
@@ -133,14 +133,14 @@ app.get("/messages", async (req, res) => {
   }
 });
 app.post("/status", async (req, res) => {
-  const userName = req.headers.user || req.headers.User;
-  const { error } = userValidation.validate({ userName });
+  const name = req.headers.user || req.headers.User;
+  const { error } = userValidation.validate({ name });
   if (error) return res.status(404).send({ message: error.message });
   try {
-    const userOnline = await db.collection("participants").findOne({ name: userName });
+    const userOnline = await db.collection("participants").findOne({ name: name });
     if (userOnline) {
-      await db.collection("participants").updateOne({ name: userName }, { $set: { lastStatus: Date.now() } });
-      return res.sendStatus(200);
+      await db.collection("participants").updateOne({ name: name }, { $set: { lastStatus: Date.now() } });
+      return res.sendStatus(201);
     } else {
       return res.status(404).send({ message: error.message });
     }
