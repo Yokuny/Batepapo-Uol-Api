@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 const inactiveUser = async (db) => {
   const tenSecondsAgo = Date.now();
   try {
