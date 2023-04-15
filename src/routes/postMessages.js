@@ -4,6 +4,7 @@ import { messageValidation } from "../scripts/validation.js";
 const postMessages = async (req, res, db) => {
   const { to, text, type } = req.body;
   const userName = req.headers.user || req.headers.User;
+
   try {
     const userOnline = await db.collection("participants").findOne({ name: userName });
     const from = userOnline.name;

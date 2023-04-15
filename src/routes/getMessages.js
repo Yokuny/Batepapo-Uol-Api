@@ -3,6 +3,7 @@ import { numberValidation } from "../scripts/validation.js";
 const getMessages = async (req, res, db) => {
   const userName = req.headers.user || req.headers.User;
   const { limit } = req.query;
+
   const { error } = numberValidation.validate({ limit });
   try {
     let availableMessages;

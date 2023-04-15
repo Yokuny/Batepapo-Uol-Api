@@ -3,8 +3,10 @@ import { userValidation } from "../scripts/validation.js";
 
 const postParticipants = async (req, res, db) => {
   const { name } = req.body;
+
   const { error } = userValidation.validate({ name });
   if (error) return res.status(422).send({ message: error.message });
+
   try {
     const usersDatabase = await db.collection("participants").findOne({ name: name });
     if (usersDatabase) {
