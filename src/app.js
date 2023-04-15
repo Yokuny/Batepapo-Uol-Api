@@ -62,7 +62,7 @@ const inactiveUser = async () => {
     console.log({ message: err.message });
   }
 };
-setInterval(inactiveUser, 150000);
+setInterval(inactiveUser, 15000);
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
