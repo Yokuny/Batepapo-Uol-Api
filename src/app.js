@@ -1,68 +1,19 @@
 import express from "express";
 import dotenv from "dotenv";
 import dayjs from "dayjs";
-import cors from "cors";
-import joi from "joi";
-import { MongoClient } from "mongodb";
-
-const userValidation = joi.object({
-  name: joi.string().min(1).required(),
-});
-const messageValidation = joi.object({
-  to: joi.string().min(1).required(),
-  text: joi.string().min(1).max(250).required(),
-  type: joi.string().valid("message", "private_message").required(),
-  from: joi.string().min(1).required(),
-});
-const numberValidation = joi.object({
-  limit: joi.number().integer().min(1).required(),
-});
+import dbConnection from "./scripts/dbConnection.js";
+import inactiveUser from "./scripts/inactiveUser.js";
+import { userValidation, messageValidation, numberValidation } from "./scripts/validation.js";
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
 dotenv.config();
-
 const PORT = process.env.PORT || 5000;
-const URI = process.env.DATABASE_URL;
 
-const dbConnection = async () => {
-  const database = new MongoClient(URI);
-  try {
-    await database.connect();
-    return database.db();
-  } catch (err) {
-    console.log({ message: err.message });
-  }
-};
 const db = await dbConnection();
 
-const inactiveUser = async () => {
-  const tenSecondsAgo = Date.now();
-  try {
-    const afk = await db
-      .collection("participants")
-      .find({
-        lastStatus: { $lt: tenSecondsAgo - 10000 },
-      })
-      .toArray();
-    console.log(afk);
-    afk.forEach(async (user) => {
-      const time = dayjs().format("HH:mm:ss");
-      await db.collection("messages").insertOne({
-        to: "Todos",
-        text: "sai da sala...",
-        type: "status",
-        from: user.name,
-        time: time,
-      });
-      await db.collection("participants").deleteOne({ name: user.name });
-    });
-  } catch (err) {
-    console.log({ message: err.message });
-  }
-};
-setInterval(inactiveUser, 15000);
+setInterval(inactiveUser, 1500, db);
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
