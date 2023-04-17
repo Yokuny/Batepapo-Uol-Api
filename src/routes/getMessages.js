@@ -18,6 +18,7 @@ const getMessages = async (req, res, db) => {
       availableMessages = await db
         .collection("messages")
         .find({ $or: [{ to: "Todos" }, { to: userName }, { from: userName }] })
+        .sort({ $natural: -1 })
         .limit(limitNumber)
         .toArray();
       return res.status(200).send(availableMessages);
